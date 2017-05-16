@@ -64,3 +64,31 @@ int main(int argc, char* argv[])
         unload();
         return 1;
     }
+
+    // prepare to report misspellings
+    printf("\nMISSPELLED WORDS\n\n");
+
+    // prepare to spell-check
+    int index = 0, misspellings = 0, words = 0;
+    char word[LENGTH+1];
+
+    // spell-check each word in text
+    for (int c = fgetc(fp); c != EOF; c = fgetc(fp))
+    {
+        // allow only alphabetical characters and apostrophes
+        if (isalpha(c) || (c == '\'' && index > 0))
+        {
+            // append character to word
+            word[index] = c;
+            index++;
+
+            // ignore alphabetical strings too long to be words
+            if (index > LENGTH)
+            {
+                // consume remainder of alphabetical string
+                while ((c = fgetc(fp)) != EOF && isalpha(c));
+
+                // prepare for new word
+                index = 0;
+            }
+        }
