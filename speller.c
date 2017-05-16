@@ -92,3 +92,63 @@ int main(int argc, char* argv[])
                 index = 0;
             }
         }
+
+           // ignore words with numbers (like MS Word can)
+        else if (isdigit(c))
+        {
+            // consume remainder of alphanumeric string
+            while ((c = fgetc(fp)) != EOF && isalnum(c));
+
+            // prepare for new word
+            index = 0;
+        }
+
+        // we must have found a whole word
+        else if (index > 0)
+        {
+            // terminate current word
+            word[index] = '\0';
+
+            // update counter
+            words++;
+
+            // check word's spelling
+            getrusage(RUSAGE_SELF, &before);
+            bool misspelled = !check(word);
+            getrusage(RUSAGE_SELF, &after);
+
+            // update benchmark
+            time_check += calculate(&before, &after);
+
+            // print word if misspelled
+            if (misspelled)
+            {
+                printf("%s\n", word);
+                misspellings++;
+            }
+
+            // prepare for next word
+            index = 0;
+        }
+    }
+
+    // check whether there was an error
+    if (ferror(fp))
+    {
+        fclose(fp);
+        printf("Error reading %s.\n", text);
+        unload();
+        return 1;
+    }
+
+    // close text
+    fclose(fp);
+
+    // determine dictionary's size
+    getrusage(RUSAGE_SELF, &before);
+    unsigned int n = size();
+    getrusage(RUSAGE_SELF, &after);
+
+    // calculate time to determine dictionary's size
+    time_size = calculate(&before, &after);
+
