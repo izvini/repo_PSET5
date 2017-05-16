@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
             }
         }
 
-           // ignore words with numbers (like MS Word can)
+        // ignore words with numbers (like MS Word can)
         else if (isdigit(c))
         {
             // consume remainder of alphanumeric string
@@ -152,3 +152,51 @@ int main(int argc, char* argv[])
     // calculate time to determine dictionary's size
     time_size = calculate(&before, &after);
 
+    // unload dictionary
+    getrusage(RUSAGE_SELF, &before);
+    bool unloaded = unload();
+    getrusage(RUSAGE_SELF, &after);
+
+    // abort if dictionary not unloaded
+    if (!unloaded)
+    {
+        printf("Could not unload %s.\n", dictionary);
+        return 1;
+    }
+
+    // calculate time to unload dictionary
+    time_unload = calculate(&before, &after);
+
+    // report benchmarks
+    printf("\nWORDS MISSPELLED:     %d\n", misspellings);
+    printf("WORDS IN DICTIONARY:  %d\n", n);
+    printf("WORDS IN TEXT:        %d\n", words);
+    printf("TIME IN load:         %.2f\n", time_load);
+    printf("TIME IN check:        %.2f\n", time_check);
+    printf("TIME IN size:         %.2f\n", time_size);
+    printf("TIME IN unload:       %.2f\n", time_unload);
+    printf("TIME IN TOTAL:        %.2f\n\n",
+     time_load + time_check + time_size + time_unload);
+
+    // that's all folks
+    return 0;
+}
+
+/**
+ * Returns number of seconds between b and a.
+ */
+double calculate(const struct rusage* b, const struct rusage* a)
+{
+    if (b == NULL || a == NULL)
+    {
+        return 0.0;
+    }
+    else
+    {
+        return ((((a->ru_utime.tv_sec * 1000000 + a->ru_utime.tv_usec) -
+                 (b->ru_utime.tv_sec * 1000000 + b->ru_utime.tv_usec)) +
+                ((a->ru_stime.tv_sec * 1000000 + a->ru_stime.tv_usec) -
+                 (b->ru_stime.tv_sec * 1000000 + b->ru_stime.tv_usec)))
+                / 1000000.0);
+    }
+}
